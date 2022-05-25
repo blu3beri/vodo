@@ -1,9 +1,13 @@
 [package]
 name = "vodo"
 version = "0.1.0"
+edition = "2021"
 repository = "https://github.com/blu3beri/vodo"
 license = "MIT"
-edition = "2021"
+readme = "README.md"
+keywords = ["cli", "tui", "todo"]
+categories = ["cli", "tui"]
+description = "Vodo is a todo and note manager"
 
 [workspace]
 members = ["packages/*"]

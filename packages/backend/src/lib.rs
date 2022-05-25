@@ -1,8 +1,11 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
+//! main backend for all the functionality of `vodo`
+
+#![deny(
+    clippy::missing_docs_in_private_items,
+    clippy::suspicious,
+    clippy::complexity,
+    clippy::cargo
+)]
+
+/// Error module
+mod error;
