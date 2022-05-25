@@ -1,8 +1,19 @@
 [package]
 name = "vodo"
 version = "0.1.0"
+repository = "https://github.com/blu3beri/vodo"
+license = "MIT"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = ["packages/*"]
+
+[[bin]]
+name = "vodo"
+path = "packages/cli/src/main.rs"
 
 [dependencies]
+
+[dependencies.serde]
+version = "1.0.137"
+features = ["derive"]
