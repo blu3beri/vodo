@@ -1,4 +1,4 @@
-use backend::model::{Note, Notes};
+use backend::model::{Note, Notes, State};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -8,8 +8,8 @@ use std::io::{self, Error, Stdout};
 use std::time::{Duration, Instant};
 use tui::{
     backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Layout},
-    style::{Modifier, Style},
+    layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Modifier, Style},
     widgets::{Block, Borders, Cell, Paragraph, Row, Table, TableState},
     Frame, Terminal,
 };
@@ -21,9 +21,17 @@ pub struct VodoTerminal {
     tick_rate: Duration,
 }
 
+enum InputMode {
+    Normal,
+    Editing,
+}
+
 struct App {
     state: TableState,
     items: Vec<Note>,
+    show_popup: bool,
+    input: String,
+    input_mode: InputMode,
 }
 
 impl VodoTerminal {
@@ -35,10 +43,7 @@ impl VodoTerminal {
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
         let backend = CrosstermBackend::new(stdout);
 
-        let app = App {
-            state: TableState::default(),
-            items: notes.map.values().cloned().collect(),
-        };
+        let app = App::new(notes.map.values().cloned().collect());
 
         Ok(Self {
             terminal: Terminal::new(backend)?,
@@ -72,14 +77,27 @@ impl VodoTerminal {
                 .unwrap_or_else(|| Duration::from_secs(0));
             if crossterm::event::poll(timeout)? {
                 if let Event::Key(key) = event::read()? {
-                    match key.code {
-                        KeyCode::Char('q') => return Ok(()),
-                        KeyCode::Down => self.app.next(),
-                        KeyCode::Up => self.app.previous(),
-                        KeyCode::Char('j') => self.app.next(),
-                        KeyCode::Char('k') => self.app.previous(),
-                        KeyCode::Char('d') => self.app.delete(),
-                        _ => {}
+                    if !self.app.show_popup {
+                        match key.code {
+                            KeyCode::Char('q') => return Ok(()),
+                            KeyCode::Down => self.app.next(),
+                            KeyCode::Up => self.app.previous(),
+                            KeyCode::Char('j') => self.app.next(),
+                            KeyCode::Char('k') => self.app.previous(),
+                            KeyCode::Char('d') => self.app.delete(),
+                            KeyCode::Char('n') => self.app.new_note(),
+                            _ => {}
+                        }
+                    } else {
+                        match key.code {
+                            KeyCode::Char(c) => self.app.input.push(c),
+                            KeyCode::Backspace => {
+                                self.app.input.pop();
+                            }
+                            KeyCode::Esc => self.app.reset(),
+                            KeyCode::Enter => self.app.add_note(),
+                            _ => {}
+                        }
                     }
                 }
             }
@@ -92,6 +110,8 @@ impl VodoTerminal {
             .split(f.size());
 
         let selected_style = Style::default().add_modifier(Modifier::REVERSED);
+
+        // --- table ---
         let header_cells = ["State", "Note"].iter().map(|h| Cell::from(*h));
         let header = Row::new(header_cells).height(1);
         let rows = app.items.iter().map(|item| {
@@ -101,20 +121,65 @@ impl VodoTerminal {
             ];
             Row::new(cells).height(1_u16)
         });
-        let t = Table::new(rows)
+
+        let table = Table::new(rows)
             .block(Block::default().borders(Borders::ALL).title("Notes"))
             .header(header)
             .highlight_style(selected_style)
             .widths(&[Constraint::Percentage(15), Constraint::Percentage(100)]);
-        f.render_stateful_widget(t, rects[0], &mut app.state);
+        f.render_stateful_widget(table, rects[0], &mut app.state);
+        // -------------
 
+        // --- commands ---
         let b = Block::default().borders(Borders::ALL).title("Commands");
-        let text = Paragraph::new("(q) quit | (j) down | (k) up | (d) delete").block(b);
+        let text =
+            Paragraph::new("(q) quit | (j) down | (k) up | (d) delete | (n) new note").block(b);
         f.render_widget(text, rects[1]);
+        // ----------------
+
+        // --- popup ---
+        if app.show_popup {
+            let block = Block::default().title("Popup").borders(Borders::ALL);
+            let p = Paragraph::new(app.input.as_ref())
+                .style(Style::default().fg(Color::White))
+                .block(block);
+            let area = centered_rect(60, 4, f.size());
+            f.set_cursor(area.x + app.input.len() as u16 + 1, area.y + 1);
+            f.render_widget(p, area);
+        }
+        // ---------
     }
 }
 
 impl App {
+    pub fn new(items: Vec<Note>) -> Self {
+        Self {
+            state: TableState::default(),
+            items,
+            show_popup: false,
+            input: String::default(),
+            input_mode: InputMode::Normal,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.show_popup = !self.show_popup;
+        self.input_mode = InputMode::Normal;
+        self.input = String::from("");
+    }
+
+    pub fn new_note(&mut self) {
+        self.show_popup = true;
+    }
+
+    fn add_note(&mut self) {
+        self.items.push(Note {
+            state: State::None,
+            title: self.input.to_owned(),
+        });
+        self.reset();
+    }
+
     pub fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
@@ -155,4 +220,30 @@ impl App {
             }
         }
     }
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_y) / 2),
+                Constraint::Length(percent_y),
+                Constraint::Percentage((100 - percent_y) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Percentage(percent_x),
+                Constraint::Percentage((100 - percent_x) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(popup_layout[1])[1]
 }
