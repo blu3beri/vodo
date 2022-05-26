@@ -32,10 +32,10 @@ pub struct Notes {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Note {
     /// Title of the note as displayed to the user
-    title: String,
+    pub title: String,
 
     /// Simple state of the note
-    state: State,
+    pub state: State,
     // /// When the expiry date hits
     // ends_at: Option<String>,
     // /// Tags to categorize and filter on by the user
