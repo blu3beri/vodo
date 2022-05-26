@@ -1,32 +1,29 @@
-use backend::model::Notes;
+use backend::model::{Note, Notes};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{
-    io::{self, Error, Stdout},
-    time::{Duration, Instant},
-};
+use std::io::{self, Error, Stdout};
+use std::time::{Duration, Instant};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Layout},
     style::{Color, Modifier, Style},
-    text::Spans,
-    widgets::{Block, Borders, List, ListItem, ListState},
+    widgets::{Block, Borders, Cell, Row, Table, TableState},
     Frame, Terminal,
 };
 
 /// Terminal tui for vodo
 pub struct VodoTerminal {
-    /// Main tui terminal that will be passed around
     terminal: Terminal<CrosstermBackend<Stdout>>,
     app: App,
     tick_rate: Duration,
 }
 
 struct App {
-    items: StatefulList<(String, usize)>,
+    state: TableState,
+    items: Vec<Note>,
 }
 
 impl VodoTerminal {
@@ -39,13 +36,8 @@ impl VodoTerminal {
         let backend = CrosstermBackend::new(stdout);
 
         let app = App {
-            items: StatefulList::with_items(
-                notes
-                    .map
-                    .values()
-                    .map(|n| (n.title.to_owned(), 0usize))
-                    .collect(),
-            ),
+            state: TableState::default(),
+            items: notes.map.values().cloned().collect(),
         };
 
         Ok(Self {
@@ -82,11 +74,10 @@ impl VodoTerminal {
                 if let Event::Key(key) = event::read()? {
                     match key.code {
                         KeyCode::Char('q') => return Ok(()),
-                        KeyCode::Left => self.app.items.unselect(),
-                        KeyCode::Down => self.app.items.next(),
-                        KeyCode::Char('j') => self.app.items.next(),
-                        KeyCode::Char('k') => self.app.items.previous(),
-                        KeyCode::Char('d') => self.app.items.delete(),
+                        KeyCode::Down => self.app.next(),
+                        KeyCode::Char('j') => self.app.next(),
+                        KeyCode::Char('k') => self.app.previous(),
+                        KeyCode::Char('d') => self.app.delete(),
                         _ => {}
                     }
                 }
@@ -95,59 +86,31 @@ impl VodoTerminal {
     }
 
     fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
-        let chunks = Layout::default()
+        let rects = Layout::default()
             .constraints([Constraint::Percentage(100)].as_ref())
             .split(f.size());
 
-        // Iterate through all elements in the `items` app and append some debug text to it.
-        let items: Vec<ListItem> = app
-            .items
-            .items
-            .iter()
-            .map(|i| {
-                let lines = vec![Spans::from(&i.0[..])];
-                ListItem::new(lines).style(Style::default())
-            })
-            .collect();
-
-        // Create a List from all list items and highlight the currently selected one
-        let items = List::new(items)
+        let selected_style = Style::default().add_modifier(Modifier::REVERSED);
+        let header_cells = ["State", "Note"].iter().map(|h| Cell::from(*h));
+        let header = Row::new(header_cells).height(1);
+        let rows = app.items.iter().map(|item| {
+            let cells = vec![
+                Cell::from(String::from(item.state.to_owned())),
+                Cell::from(item.title.to_owned()),
+            ];
+            Row::new(cells).height(1_u16)
+        });
+        let t = Table::new(rows)
             .block(Block::default().borders(Borders::ALL).title("Notes"))
-            .highlight_style(
-                Style::default()
-                    .fg(Color::Blue)
-                    .add_modifier(Modifier::BOLD),
-            );
-
-        f.render_stateful_widget(items, chunks[0], &mut app.items.state);
+            .header(header)
+            .highlight_style(selected_style)
+            .widths(&[Constraint::Percentage(15), Constraint::Percentage(100)]);
+        f.render_stateful_widget(t, rects[0], &mut app.state);
     }
 }
 
-struct StatefulList<T> {
-    state: ListState,
-    items: Vec<T>,
-}
-
-impl<T> StatefulList<T> {
-    fn with_items(items: Vec<T>) -> StatefulList<T> {
-        StatefulList {
-            state: ListState::default(),
-            items,
-        }
-    }
-
-    fn delete(&mut self) {
-        if let Some(i) = self.state.selected() {
-            self.items.remove(i);
-            if i == 0 {
-                self.state.select(Some(0));
-            } else {
-                self.state.select(Some(i - 1));
-            }
-        }
-    }
-
-    fn next(&mut self) {
+impl App {
+    pub fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
                 if i >= self.items.len() - 1 {
@@ -161,7 +124,7 @@ impl<T> StatefulList<T> {
         self.state.select(Some(i));
     }
 
-    fn previous(&mut self) {
+    pub fn previous(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
                 if i == 0 {
@@ -175,7 +138,17 @@ impl<T> StatefulList<T> {
         self.state.select(Some(i));
     }
 
-    fn unselect(&mut self) {
-        self.state.select(None);
+    fn delete(&mut self) {
+        if let Some(i) = self.state.selected() {
+            if self.items.get(i).is_none() {
+                return;
+            }
+            self.items.remove(i);
+            if i == 0 {
+                self.state.select(Some(0));
+            } else {
+                self.state.select(Some(i - 1));
+            }
+        }
     }
 }

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// State of a note
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum State {
     /// No state
     None,
@@ -20,6 +20,20 @@ pub enum State {
     Expired,
 }
 
+impl From<State> for String {
+    fn from(s: State) -> Self {
+        let s = match s {
+            State::None => "",
+            State::Todo => "Todo",
+            State::InProgress => "In progress",
+            State::Done => "Done",
+            State::Expired => "Expired",
+        };
+
+        Self::from(s)
+    }
+}
+
 /// Hashmap of notes where the key is a sha-1 hash
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Notes {
@@ -29,7 +43,7 @@ pub struct Notes {
 }
 
 /// A note / todo
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Note {
     /// Title of the note as displayed to the user
     pub title: String,
@@ -54,10 +68,7 @@ pub struct Note {
 
 impl Note {
     /// Create a new note with a title
-    pub fn new(title: String) -> Self {
-        Self {
-            title,
-            state: State::None,
-        }
+    pub fn new(title: String, state: State) -> Self {
+        Self { title, state }
     }
 }

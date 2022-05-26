@@ -4,7 +4,7 @@
 
 #![deny(clippy::suspicious, clippy::complexity, clippy::cargo)]
 
-use backend::model::{Note, Notes};
+use backend::model::{Note, Notes, State};
 use std::io;
 use terminal::VodoTerminal;
 
@@ -13,8 +13,8 @@ mod terminal;
 
 /// Entrypoint for the TUI of `vodo`
 fn main() -> Result<(), io::Error> {
-    let note = Note::new(String::from("foo"));
-    let note2 = Note::new(String::from("bar"));
+    let note = Note::new(String::from("foo"), State::Todo);
+    let note2 = Note::new(String::from("bar"), State::InProgress);
     let mut notes = Notes::default();
     notes.map.insert(String::from("hash-01"), note);
     notes.map.insert(String::from("hash-02"), note2);
