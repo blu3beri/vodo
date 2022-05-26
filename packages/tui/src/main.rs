@@ -6,7 +6,7 @@
 
 use backend::model::{Note, Notes, State};
 use std::io;
-use terminal::VodoTerminal;
+use terminal::frontend::VodoTerminal;
 
 /// Module for terminal buildup and destruction
 mod terminal;
