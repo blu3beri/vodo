@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use uuid::Uuid;
 
 /// State of a note
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum State {
     /// No state
     None,
@@ -28,8 +29,32 @@ pub struct Notes {
     pub map: HashMap<String, Note>,
 }
 
+impl Notes {
+    /// Create an empty HashMap
+    pub fn new() -> Self {
+        let hash_map: HashMap<std::string::String, Note> = HashMap::new();
+        Self { map: hash_map }
+    }
+
+    /// Append a note to the hashList of notes
+    pub fn append(&mut self, note: Note) {
+        let id = Uuid::new_v4();
+        self.map.insert(id.to_string(), note);
+    }
+
+    /// Remove a note from the hashList by its ID
+    pub fn remove_by_id(&mut self, id: String) {
+        self.map.retain(|k, _| *k != id)
+    }
+
+    /// Remove a note from the hashList by the value of the note itself
+    pub fn remove_by_note(&mut self, note: Note) {
+        self.map.retain(|_, v| *v != note)
+    }
+}
+
 /// A note / todo
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Note {
     /// Title of the note as displayed to the user
     pub title: String,

@@ -2,7 +2,7 @@
 //! Allows for basic functionality, but the TUI is gets
 //! primary support, so this might lack features
 
-#![deny(clippy::suspicious, clippy::complexity, clippy::cargo)]
+#![deny(clippy::suspicious, clippy::complexity)]
 
 use backend::model::{Note, Notes};
 use std::io;
@@ -15,9 +15,9 @@ mod terminal;
 fn main() -> Result<(), io::Error> {
     let note = Note::new(String::from("foo"));
     let note2 = Note::new(String::from("bar"));
-    let mut notes = Notes::default();
-    notes.map.insert(String::from("hash-01"), note);
-    notes.map.insert(String::from("hash-02"), note2);
+    let mut notes = Notes::new();
+    notes.append(note);
+    notes.append(note2);
 
     let mut terminal = VodoTerminal::setup(notes)?;
 
