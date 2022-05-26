@@ -4,6 +4,10 @@ use tui::widgets::TableState;
 pub struct App {
     pub state: TableState,
     pub items: Vec<Note>,
+    pub new_note_state: NewNoteState,
+}
+
+pub struct NewNoteState {
     pub show_new_note: bool,
     pub input: String,
 }
@@ -13,24 +17,26 @@ impl App {
         Self {
             state: TableState::default(),
             items,
-            show_new_note: false,
-            input: String::default(),
+            new_note_state: NewNoteState {
+                show_new_note: false,
+                input: String::default(),
+            },
         }
     }
 
     pub fn reset(&mut self) {
-        self.show_new_note = !self.show_new_note;
-        self.input = String::from("");
+        self.new_note_state.show_new_note = !self.new_note_state.show_new_note;
+        self.new_note_state.input = String::from("");
     }
 
     pub fn new_note(&mut self) {
-        self.show_new_note = true;
+        self.new_note_state.show_new_note = true;
     }
 
     pub fn add_note(&mut self) {
         self.items.push(Note {
             state: State::None,
-            title: self.input.to_owned(),
+            title: self.new_note_state.input.to_owned(),
         });
         self.reset();
     }
@@ -72,6 +78,15 @@ impl App {
                 } else {
                     self.state.select(Some(i - 1));
                 }
+            }
+        }
+    }
+
+    pub fn set_state(&mut self, state: State) {
+        if let Some(i) = self.state.selected() {
+            if self.items.get(i).is_some() {
+                let note = &mut self.items[i];
+                note.state = state;
             }
         }
     }

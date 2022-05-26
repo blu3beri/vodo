@@ -1,5 +1,5 @@
 use super::app::App;
-use backend::model::Notes;
+use backend::model::{Notes, State};
 use crossterm::{
     event::{read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -64,7 +64,7 @@ impl VodoTerminal {
                 .unwrap_or_else(|| Duration::from_secs(0));
             if crossterm::event::poll(timeout)? {
                 if let Event::Key(key) = read()? {
-                    if !self.app.show_new_note {
+                    if !self.app.new_note_state.show_new_note {
                         match key.code {
                             KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                             KeyCode::Down => self.app.next(),
@@ -73,13 +73,14 @@ impl VodoTerminal {
                             KeyCode::Char('k') => self.app.previous(),
                             KeyCode::Char('d') => self.app.delete(),
                             KeyCode::Char('n') => self.app.new_note(),
+                            KeyCode::Char('s') => self.app.set_state(State::Done),
                             _ => {}
                         }
                     } else {
                         match key.code {
-                            KeyCode::Char(c) => self.app.input.push(c),
+                            KeyCode::Char(c) => self.app.new_note_state.input.push(c),
                             KeyCode::Backspace => {
-                                self.app.input.pop();
+                                self.app.new_note_state.input.pop();
                             }
                             KeyCode::Esc => self.app.reset(),
                             KeyCode::Enter => self.app.add_note(),
@@ -120,7 +121,7 @@ impl VodoTerminal {
         // -------------
 
         // --- commands ---
-        if !app.show_new_note {
+        if !app.new_note_state.show_new_note {
             let b = Block::default().borders(Borders::ALL).title("Commands");
             let text =
                 Paragraph::new("(q) quit | (j) down | (k) up | (d) delete | (n) new note").block(b);
@@ -129,13 +130,16 @@ impl VodoTerminal {
         // ----------------
 
         // --- new note ---
-        if app.show_new_note {
+        if app.new_note_state.show_new_note {
             let block = Block::default().title("New Note").borders(Borders::ALL);
-            let p = Paragraph::new(app.input.as_ref())
+            let p = Paragraph::new(app.new_note_state.input.as_ref())
                 .style(Style::default().fg(Color::White))
                 .block(block)
                 .wrap(Wrap { trim: true });
-            f.set_cursor(rects[1].x + app.input.len() as u16 + 1, rects[1].y + 1);
+            f.set_cursor(
+                rects[1].x + app.new_note_state.input.len() as u16 + 1,
+                rects[1].y + 1,
+            );
             f.render_widget(p, rects[1]);
         }
         // ----------------
