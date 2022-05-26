@@ -11,3 +11,5 @@ license = "MIT"
 
 [dependencies]
 backend = { path = "../backend" }
+tui = "0.18"
+crossterm = "0.23"

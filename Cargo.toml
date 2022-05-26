@@ -18,3 +18,5 @@ path = "packages/tui/src/main.rs"
 
 [dependencies]
 backend = { path = "packages/backend" }
+tui = "0.18"
+crossterm = "0.23"

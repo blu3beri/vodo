@@ -9,10 +9,17 @@
     clippy::cargo
 )]
 
-use backend::model::Note;
+use std::io;
+use terminal::VodoTerminal;
+
+/// Module for terminal buildup and destruction
+mod terminal;
 
 /// Entrypoint for the TUI of `vodo`
-fn main() {
-    let note = Note::new(String::from("foo"));
-    println!("{:?}", note);
+fn main() -> Result<(), io::Error> {
+    let mut terminal = VodoTerminal::setup()?;
+
+    terminal.destruct()?;
+
+    Ok(())
 }
