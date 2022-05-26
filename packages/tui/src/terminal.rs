@@ -9,8 +9,8 @@ use std::time::{Duration, Instant};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Layout},
-    style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Cell, Row, Table, TableState},
+    style::{Modifier, Style},
+    widgets::{Block, Borders, Cell, Paragraph, Row, Table, TableState},
     Frame, Terminal,
 };
 
@@ -75,6 +75,7 @@ impl VodoTerminal {
                     match key.code {
                         KeyCode::Char('q') => return Ok(()),
                         KeyCode::Down => self.app.next(),
+                        KeyCode::Up => self.app.previous(),
                         KeyCode::Char('j') => self.app.next(),
                         KeyCode::Char('k') => self.app.previous(),
                         KeyCode::Char('d') => self.app.delete(),
@@ -87,7 +88,7 @@ impl VodoTerminal {
 
     fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let rects = Layout::default()
-            .constraints([Constraint::Percentage(100)].as_ref())
+            .constraints([Constraint::Percentage(96), Constraint::Min(3)].as_ref())
             .split(f.size());
 
         let selected_style = Style::default().add_modifier(Modifier::REVERSED);
@@ -106,6 +107,10 @@ impl VodoTerminal {
             .highlight_style(selected_style)
             .widths(&[Constraint::Percentage(15), Constraint::Percentage(100)]);
         f.render_stateful_widget(t, rects[0], &mut app.state);
+
+        let b = Block::default().borders(Borders::ALL).title("Commands");
+        let text = Paragraph::new("(q) quit | (j) down | (k) up | (d) delete").block(b);
+        f.render_widget(text, rects[1]);
     }
 }
 
@@ -140,14 +145,13 @@ impl App {
 
     fn delete(&mut self) {
         if let Some(i) = self.state.selected() {
-            if self.items.get(i).is_none() {
-                return;
-            }
-            self.items.remove(i);
-            if i == 0 {
-                self.state.select(Some(0));
-            } else {
-                self.state.select(Some(i - 1));
+            if self.items.get(i).is_some() {
+                self.items.remove(i);
+                if i == 0 {
+                    self.state.select(Some(0));
+                } else {
+                    self.state.select(Some(i - 1));
+                }
             }
         }
     }
