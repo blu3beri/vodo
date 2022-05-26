@@ -4,7 +4,7 @@ use tui::widgets::TableState;
 pub struct App {
     pub state: TableState,
     pub items: Vec<Note>,
-    pub show_popup: bool,
+    pub show_new_note: bool,
     pub input: String,
 }
 
@@ -13,18 +13,18 @@ impl App {
         Self {
             state: TableState::default(),
             items,
-            show_popup: false,
+            show_new_note: false,
             input: String::default(),
         }
     }
 
     pub fn reset(&mut self) {
-        self.show_popup = !self.show_popup;
+        self.show_new_note = !self.show_new_note;
         self.input = String::from("");
     }
 
     pub fn new_note(&mut self) {
-        self.show_popup = true;
+        self.show_new_note = true;
     }
 
     pub fn add_note(&mut self) {
@@ -76,4 +76,3 @@ impl App {
         }
     }
 }
-

@@ -9,9 +9,9 @@ use std::io::{stdout, Error, Result, Stdout};
 use std::time::{Duration, Instant};
 use tui::{
     backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Cell, Paragraph, Row, Table},
+    widgets::{Block, Borders, Cell, Paragraph, Row, Table, Wrap},
     Frame, Terminal,
 };
 
@@ -49,9 +49,8 @@ impl VodoTerminal {
             LeaveAlternateScreen,
             DisableMouseCapture
         )?;
-        self.terminal.show_cursor()?;
 
-        Ok(())
+        self.terminal.show_cursor()
     }
 
     pub fn run_app(&mut self) -> Result<()> {
@@ -65,9 +64,9 @@ impl VodoTerminal {
                 .unwrap_or_else(|| Duration::from_secs(0));
             if crossterm::event::poll(timeout)? {
                 if let Event::Key(key) = read()? {
-                    if !self.app.show_popup {
+                    if !self.app.show_new_note {
                         match key.code {
-                            KeyCode::Char('q') => return Ok(()),
+                            KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                             KeyCode::Down => self.app.next(),
                             KeyCode::Up => self.app.previous(),
                             KeyCode::Char('j') => self.app.next(),
@@ -94,20 +93,22 @@ impl VodoTerminal {
 
     fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         let rects = Layout::default()
-            .constraints([Constraint::Percentage(96), Constraint::Min(3)].as_ref())
+            .constraints([Constraint::Min(10), Constraint::Length(3)].as_ref())
             .split(f.size());
 
         let selected_style = Style::default().add_modifier(Modifier::REVERSED);
 
         // --- table ---
-        let header_cells = ["State", "Note"].iter().map(|h| Cell::from(*h));
+        let header_cells = ["State", "Note"]
+            .iter()
+            .map(|h| Cell::from(*h).style(Style::default().add_modifier(Modifier::BOLD)));
         let header = Row::new(header_cells).height(1);
         let rows = app.items.iter().map(|item| {
             let cells = vec![
                 Cell::from(String::from(item.state.to_owned())),
                 Cell::from(item.title.to_owned()),
             ];
-            Row::new(cells).height(1_u16)
+            Row::new(cells)
         });
 
         let table = Table::new(rows)
@@ -119,48 +120,24 @@ impl VodoTerminal {
         // -------------
 
         // --- commands ---
-        let b = Block::default().borders(Borders::ALL).title("Commands");
-        let text =
-            Paragraph::new("(q) quit | (j) down | (k) up | (d) delete | (n) new note").block(b);
-        f.render_widget(text, rects[1]);
+        if !app.show_new_note {
+            let b = Block::default().borders(Borders::ALL).title("Commands");
+            let text =
+                Paragraph::new("(q) quit | (j) down | (k) up | (d) delete | (n) new note").block(b);
+            f.render_widget(text, rects[1]);
+        }
         // ----------------
 
-        // --- popup ---
-        if app.show_popup {
-            let block = Block::default().title("Popup").borders(Borders::ALL);
+        // --- new note ---
+        if app.show_new_note {
+            let block = Block::default().title("New Note").borders(Borders::ALL);
             let p = Paragraph::new(app.input.as_ref())
                 .style(Style::default().fg(Color::White))
-                .block(block);
-            let area = VodoTerminal::centered_rect(60, 4, f.size());
-            f.set_cursor(area.x + app.input.len() as u16 + 1, area.y + 1);
-            f.render_widget(p, area);
+                .block(block)
+                .wrap(Wrap { trim: true });
+            f.set_cursor(rects[1].x + app.input.len() as u16 + 1, rects[1].y + 1);
+            f.render_widget(p, rects[1]);
         }
-        // ---------
-    }
-
-    pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-        let popup_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(
-                [
-                    Constraint::Percentage((100 - percent_y) / 2),
-                    Constraint::Length(percent_y),
-                    Constraint::Percentage((100 - percent_y) / 2),
-                ]
-                .as_ref(),
-            )
-            .split(r);
-
-        Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(
-                [
-                    Constraint::Percentage((100 - percent_x) / 2),
-                    Constraint::Percentage(percent_x),
-                    Constraint::Percentage((100 - percent_x) / 2),
-                ]
-                .as_ref(),
-            )
-            .split(popup_layout[1])[1]
+        // ----------------
     }
 }

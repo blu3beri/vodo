@@ -68,7 +68,10 @@ pub struct Note {
 
 impl Note {
     /// Create a new note with a title
-    pub fn new(title: String, state: State) -> Self {
-        Self { title, state }
+    pub fn new(title: impl Into<String>, state: State) -> Self {
+        Self {
+            title: title.into(),
+            state,
+        }
     }
 }
