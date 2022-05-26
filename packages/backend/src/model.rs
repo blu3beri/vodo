@@ -1,6 +1,11 @@
+extern crate mmap_storage;
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use uuid::Uuid;
+
+const STORAGE_PATH: &'static str = "notes.json";
 
 /// State of a note
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -30,8 +35,48 @@ pub struct Notes {
 }
 
 impl Notes {
+    /// Load storage
+    pub fn load_storage(storage_path: Option<String>) {
+        match storage_path {
+            Some(path) => {
+                let mut storage =
+                    mmap_storage::file::Storage::open(path).expect("To create storage");
+
+                // TODO: how to fix below into and return the file contents
+                // let mut data: HashMap<String, Note> = storage.into();
+            }
+            None => {
+                let mut storage =
+                    mmap_storage::file::Storage::open(STORAGE_PATH).expect("To create storage");
+                // TODO: how to fix below into and return the file contents
+                // let mut data: HashMap<String, Note> = storage.into();
+            }
+        }
+    }
+
+    /// Save the notes to file
+    pub fn save(&self, storage_path: Option<String>) {
+        match storage_path {
+            Some(path) => {
+                let mut storage =
+                    mmap_storage::file::Storage::open(path).expect("To create storage");
+
+                // TODO: Figure out how to save to file with this method
+                // storage.put_data(self.map)
+            }
+            None => {
+                let mut storage =
+                    mmap_storage::file::Storage::open(STORAGE_PATH).expect("To create storage");
+
+                // TODO: Figure out how to save to file with this method
+                // storage.put_data(self.map)
+            }
+        }
+    }
+
     /// Create an empty HashMap
     pub fn new() -> Self {
+        // TODO: load from file here using above method when it works
         let hash_map: HashMap<std::string::String, Note> = HashMap::new();
         Self { map: hash_map }
     }

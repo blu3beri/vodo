@@ -19,6 +19,8 @@ fn main() -> Result<(), io::Error> {
     notes.append(note);
     notes.append(note2);
 
+    // TOOD: notes.save(?path) to save to file
+
     let mut terminal = VodoTerminal::setup(notes)?;
 
     terminal.run_app()?;
