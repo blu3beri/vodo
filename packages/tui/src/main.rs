@@ -9,7 +9,10 @@
     clippy::cargo
 )]
 
-/// Entrypoint for the CLI interface of `vodo`
+use backend::model::Note;
+
+/// Entrypoint for the TUI of `vodo`
 fn main() {
-    println!("Hello, world!");
+    let note = Note::new(String::from("foo"));
+    println!("{:?}", note);
 }

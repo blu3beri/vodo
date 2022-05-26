@@ -9,3 +9,6 @@
 
 /// Error module
 mod error;
+
+/// Data structure model
+pub mod model;

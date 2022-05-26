@@ -1,0 +1,13 @@
+[package]
+name = "tui"
+version = "0.0.0"
+edition = "2021"
+repository = "https://github.com/blu3beri/vodo/packages/tui"
+readme = "../../README.md"
+keywords = ["tui"]
+categories = ["tui"]
+description = "tui for vodo"
+license = "MIT"
+
+[dependencies]
+backend = { path = "../backend" }

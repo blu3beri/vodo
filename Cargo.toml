@@ -5,8 +5,8 @@ edition = "2021"
 repository = "https://github.com/blu3beri/vodo"
 license = "MIT"
 readme = "README.md"
-keywords = ["cli", "tui", "todo"]
-categories = ["cli", "tui"]
+keywords = ["tui", "todo"]
+categories = ["tui"]
 description = "Vodo is a todo and note manager"
 
 [workspace]
@@ -14,10 +14,7 @@ members = ["packages/*"]
 
 [[bin]]
 name = "vodo"
-path = "packages/cli/src/main.rs"
+path = "packages/tui/src/main.rs"
 
 [dependencies]
-
-[dependencies.serde]
-version = "1.0.137"
-features = ["derive"]
+backend = { path = "packages/backend" }

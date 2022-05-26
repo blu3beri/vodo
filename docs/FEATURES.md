@@ -1,19 +1,12 @@
 # Features
 
-- [ ] Simple key value (string, serde::Metadata) file backend
-  - Persistent
-  - Key
-    - Hash
-  - Metadata
-    - Title
-    - Description
-    - Created at
-    - Updated at
-    - ends at
-    - Tags
-    - state
-      - None
-      - in progress
-      - done
-      - expired
-    - priority (1,2,3,4,5)
+- Persistence
+- Note: title, state, UUID (sha-1 hash as key)
+
+- TUI
+- List of all the notes with their title and state
+- popups (warning and error for now)
+- j: down
+- k: up
+- n: new note
+- d: delete
