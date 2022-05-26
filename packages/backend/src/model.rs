@@ -21,8 +21,12 @@ pub enum State {
 }
 
 /// Hashmap of notes where the key is a sha-1 hash
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Notes(HashMap<String, Note>);
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Notes {
+    /// The actual notes
+    /// TODO: how do zero-width unnamed structures work?
+    pub map: HashMap<String, Note>,
+}
 
 /// A note / todo
 #[derive(Serialize, Deserialize, Debug)]
