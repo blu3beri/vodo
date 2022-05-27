@@ -4,25 +4,18 @@
 
 #![deny(clippy::suspicious, clippy::complexity)]
 
-use backend::model::{Note, Notes};
+use backend::model::Notes;
 use std::io;
-use terminal::VodoTerminal;
+use terminal::frontend::VodoTerminal;
 
 /// Module for terminal buildup and destruction
 mod terminal;
 
 /// Entrypoint for the TUI of `vodo`
 fn main() -> Result<(), io::Error> {
-    let note = Note::new(String::from("foo888888"));
-    let note2 = Note::new(String::from("bar"));
-    let mut notes = Notes::new();
-    notes.append(note);
-    notes.append(note2);
+    let notes = Notes::new();
 
-    notes.save(None);
-    // TOOD: notes.save(?path) to save to file
-
-    let mut terminal = VodoTerminal::setup(&notes)?;
+    let mut terminal = VodoTerminal::setup(notes)?;
 
     terminal.run_app()?;
 

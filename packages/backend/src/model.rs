@@ -11,7 +11,7 @@ use crate::error::Error;
 const STORAGE_PATH: &str = "notes.json";
 
 /// State of a note
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum State {
     /// No state
     None,
@@ -29,19 +29,42 @@ pub enum State {
     Expired,
 }
 
+impl From<State> for String {
+    fn from(s: State) -> Self {
+        let s = match s {
+            State::None => "",
+            State::Todo => "Todo",
+            State::InProgress => "In progress",
+            State::Done => "Done",
+            State::Expired => "Expired",
+        };
+
+        Self::from(s)
+    }
+}
+
 /// Hashmap of notes where the key is a sha-1 hash
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Notes {
     /// The actual notes
     /// TODO: how do zero-width unnamed structures work?
     pub map: HashMap<String, Note>,
+    path: String,
+}
+
+impl Default for Notes {
+    fn default() -> Self {
+        Self {
+            map: Default::default(),
+            path: STORAGE_PATH.to_string(),
+        }
+    }
 }
 
 impl Notes {
     /// Load storage
-    pub fn load_storage(storage_path: Option<&'static str>) -> Result<Notes, Error> {
-        let path = storage_path.unwrap_or(STORAGE_PATH);
-        let file = File::open(path).unwrap();
+    pub fn load_storage(&self) -> Result<Notes, Error> {
+        let file = File::open(&self.path).unwrap();
         let reader = BufReader::new(file);
         let file_data: Notes = serde_json::from_reader(reader).unwrap_or_default();
 
@@ -49,21 +72,21 @@ impl Notes {
     }
 
     /// Save the notes to file
-    pub fn save(&self, storage_path: Option<&'static str>) {
-        let path = storage_path.unwrap_or(STORAGE_PATH);
-        serde_json::to_writer(&File::create(path).unwrap(), &self).unwrap()
+    pub fn save(&self) {
+        serde_json::to_writer(&File::create(&self.path).unwrap(), &self).unwrap()
     }
 
     /// Create an empty HashMap
     pub fn new() -> Self {
         // TODO: load from file here using above method when it works
-        Notes::load_storage(None).unwrap()
+        Notes::load_storage(&Notes::default()).unwrap()
     }
 
     /// Append a note to the hashList of notes
     pub fn append(&mut self, note: Note) {
         let id = Uuid::new_v4();
         self.map.insert(id.to_string(), note);
+        self.save();
     }
 
     /// Remove a note from the hashList by its ID
@@ -78,7 +101,7 @@ impl Notes {
 }
 
 /// A note / todo
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Note {
     /// Title of the note as displayed to the user
     pub title: String,
@@ -103,10 +126,10 @@ pub struct Note {
 
 impl Note {
     /// Create a new note with a title
-    pub fn new(title: String) -> Self {
+    pub fn new(title: impl Into<String>, state: State) -> Self {
         Self {
-            title,
-            state: State::None,
+            title: title.into(),
+            state,
         }
     }
 }
