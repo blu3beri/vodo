@@ -104,7 +104,7 @@ impl VodoTerminal {
             .iter()
             .map(|h| Cell::from(*h).style(Style::default().add_modifier(Modifier::BOLD)));
         let header = Row::new(header_cells).height(1);
-        let rows = app.notes.map.iter().map(|(_, item)| {
+        let rows = app.notes.map.iter().map(|item| {
             let cells = vec![
                 Cell::from(String::from(item.state.to_owned())),
                 Cell::from(item.title.to_owned()),

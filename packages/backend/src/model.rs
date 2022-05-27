@@ -1,14 +1,10 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::collections::HashMap;
+use std::env;
 use std::fs::File;
 use std::io::BufReader;
-use uuid::Uuid;
 
 use crate::error::Error;
-
-/// The standard storage path
-const STORAGE_PATH: &str = "notes.json";
 
 /// State of a note
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -43,26 +39,31 @@ impl From<State> for String {
     }
 }
 
-/// Hashmap of notes where the key is a sha-1 hash
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Notes {
     /// The actual notes
-    /// TODO: how do zero-width unnamed structures work?
-    pub map: HashMap<String, Note>,
+    pub map: Vec<Note>,
+
+    /// File path of the notes
     path: String,
 }
 
 impl Default for Notes {
     fn default() -> Self {
+        let mut home = env::var("HOME").unwrap();
+        home.push_str("/.config/vodo/notes");
         Self {
             map: Default::default(),
-            path: STORAGE_PATH.to_string(),
+            path: home,
         }
     }
 }
 
 impl Notes {
-    /// Load storage
+    pub fn new() -> Self {
+        Notes::load_storage(&Notes::default()).unwrap()
+    }
+
     pub fn load_storage(&self) -> Result<Notes, Error> {
         let file = File::open(&self.path).unwrap();
         let reader = BufReader::new(file);
@@ -71,32 +72,27 @@ impl Notes {
         Ok(file_data)
     }
 
-    /// Save the notes to file
-    pub fn save(&self) {
+    fn save(&self) {
         serde_json::to_writer(&File::create(&self.path).unwrap(), &self).unwrap()
     }
 
-    /// Create an empty HashMap
-    pub fn new() -> Self {
-        // TODO: load from file here using above method when it works
-        Notes::load_storage(&Notes::default()).unwrap()
-    }
-
-    /// Append a note to the hashList of notes
-    pub fn append(&mut self, note: Note) {
-        let id = Uuid::new_v4();
-        self.map.insert(id.to_string(), note);
+    pub fn put(&mut self, note: Note) {
+        self.map.push(note);
         self.save();
     }
 
-    /// Remove a note from the hashList by its ID
-    pub fn remove_by_id(&mut self, id: String) {
-        self.map.retain(|k, _| *k != id)
+    pub fn delete(&mut self, idx: usize) {
+        self.map.remove(idx);
+        self.save();
     }
 
-    /// Remove a note from the hashList by the value of the note itself
-    pub fn remove_by_note(&mut self, note: Note) {
-        self.map.retain(|_, v| *v != note)
+    pub fn get(&self, idx: usize) -> &Note {
+        &self.map[idx]
+    }
+
+    pub fn update(&mut self, note: &mut Note, idx: usize) {
+        std::mem::swap(&mut self.map[idx], note);
+        self.save();
     }
 }
 

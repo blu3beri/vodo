@@ -38,7 +38,7 @@ impl App {
             state: State::Todo,
             title: self.new_note_state.input.to_owned(),
         };
-        self.notes.append(note);
+        self.notes.put(note);
         self.reset();
     }
 
@@ -71,24 +71,27 @@ impl App {
     }
 
     pub fn delete(&mut self) {
-        // if let Some(i) = self.state.selected() {
-        //     if self.notes.map.get(&i).is_some() {
-        //         self.notes.map.remove(i);
-        //         if i == 0 {
-        //             self.state.select(Some(0));
-        //         } else {
-        //             self.state.select(Some(i - 1));
-        //         }
-        //     }
-        // }
+        if let Some(i) = self.state.selected() {
+            if self.notes.map.get(i).is_some() {
+                self.notes.delete(i);
+                if i == 0 {
+                    self.state.select(Some(0));
+                } else {
+                    self.state.select(Some(i - 1));
+                }
+            }
+        }
     }
 
     pub fn set_state(&mut self, state: State) {
-        // if let Some(i) = self.state.selected() {
-        //     if self.notes.map.get(i).is_some() {
-        //         let note = &mut self.notes.map[&i];
-        //         note.state = state;
-        //     }
-        // }
+        if let Some(i) = self.state.selected() {
+            if self.notes.map.get(i).is_some() {
+                let mut n = Note {
+                    state,
+                    ..self.notes.map[i].to_owned()
+                };
+                self.notes.update(&mut n, i);
+            }
+        }
     }
 }
