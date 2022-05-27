@@ -1,7 +1,7 @@
 # Features
 
 - Persistence
-- Note: title, state, UUID (sha-1 hash as key)
+- Note: title, state
 
 - TUI
 - List of all the notes with their title and state
