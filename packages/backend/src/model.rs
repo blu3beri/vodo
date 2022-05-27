@@ -1,8 +1,13 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use serde_json;
+use std::env;
+use std::fs::File;
+use std::io::BufReader;
+
+use crate::error::Error;
 
 /// State of a note
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum State {
     /// No state
     None,
@@ -34,16 +39,65 @@ impl From<State> for String {
     }
 }
 
-/// Hashmap of notes where the key is a sha-1 hash
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Notes {
     /// The actual notes
-    /// TODO: how do zero-width unnamed structures work?
-    pub map: HashMap<String, Note>,
+    pub map: Vec<Note>,
+
+    /// File path of the notes
+    path: String,
+}
+
+impl Default for Notes {
+    fn default() -> Self {
+        let mut home = env::var("HOME").unwrap();
+        home.push_str("/.config/vodo/notes");
+        Self {
+            map: Default::default(),
+            path: home,
+        }
+    }
+}
+
+impl Notes {
+    pub fn new() -> Self {
+        Notes::load_storage(&Notes::default()).unwrap()
+    }
+
+    pub fn load_storage(&self) -> Result<Notes, Error> {
+        let file = File::open(&self.path).unwrap();
+        let reader = BufReader::new(file);
+        let file_data: Notes = serde_json::from_reader(reader).unwrap_or_default();
+
+        Ok(file_data)
+    }
+
+    fn save(&self) {
+        serde_json::to_writer(&File::create(&self.path).unwrap(), &self).unwrap()
+    }
+
+    pub fn put(&mut self, note: Note) {
+        self.map.push(note);
+        self.save();
+    }
+
+    pub fn delete(&mut self, idx: usize) {
+        self.map.remove(idx);
+        self.save();
+    }
+
+    pub fn get(&self, idx: usize) -> &Note {
+        &self.map[idx]
+    }
+
+    pub fn update(&mut self, note: &mut Note, idx: usize) {
+        std::mem::swap(&mut self.map[idx], note);
+        self.save();
+    }
 }
 
 /// A note / todo
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Note {
     /// Title of the note as displayed to the user
     pub title: String,

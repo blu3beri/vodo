@@ -31,7 +31,7 @@ impl VodoTerminal {
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
         let backend = CrosstermBackend::new(stdout);
 
-        let app = App::new(notes.map.values().cloned().collect());
+        let app = App::new(notes);
 
         Ok(Self {
             terminal: Terminal::new(backend)?,
@@ -104,7 +104,7 @@ impl VodoTerminal {
             .iter()
             .map(|h| Cell::from(*h).style(Style::default().add_modifier(Modifier::BOLD)));
         let header = Row::new(header_cells).height(1);
-        let rows = app.items.iter().map(|item| {
+        let rows = app.notes.map.iter().map(|item| {
             let cells = vec![
                 Cell::from(String::from(item.state.to_owned())),
                 Cell::from(item.title.to_owned()),
