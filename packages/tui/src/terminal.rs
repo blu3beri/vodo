@@ -31,7 +31,7 @@ struct App {
 
 impl VodoTerminal {
     /// Setup a general terminal
-    pub fn setup(notes: Notes) -> Result<Self, Error> {
+    pub fn setup(notes: &Notes) -> Result<Self, Error> {
         // setup terminal
         enable_raw_mode()?;
         let mut stdout = io::stdout();

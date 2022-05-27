@@ -1,11 +1,14 @@
-// extern crate mmap_storage;
-
 use serde::{Deserialize, Serialize};
+use serde_json;
 use std::collections::HashMap;
-// use std::fs;
+use std::fs::File;
+use std::io::BufReader;
 use uuid::Uuid;
 
-// const STORAGE_PATH: &'static str = "notes.json";
+use crate::error::Error;
+
+/// The standard storage path
+const STORAGE_PATH: &str = "notes.json";
 
 /// State of a note
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -35,50 +38,26 @@ pub struct Notes {
 }
 
 impl Notes {
-    // /// Load storage
-    // pub fn load_storage(storage_path: Option<String>) {
-    //     match storage_path {
-    //         Some(path) => {
-    //             let mut storage =
-    //                 mmap_storage::file::Storage::open(path).expect("To create storage");
+    /// Load storage
+    pub fn load_storage(storage_path: Option<&'static str>) -> Result<Notes, Error> {
+        let path = storage_path.unwrap_or(STORAGE_PATH);
+        let file = File::open(path).unwrap();
+        let reader = BufReader::new(file);
+        let file_data: Notes = serde_json::from_reader(reader).unwrap_or_default();
 
-    //             // TODO: how to fix below into and return the file contents
-    //             // let mut data: HashMap<String, Note> = storage.into();
-    //         }
-    //         None => {
-    //             let mut storage =
-    //                 mmap_storage::file::Storage::open(STORAGE_PATH).expect("To create storage");
-    //             // TODO: how to fix below into and return the file contents
-    //             // let mut data: HashMap<String, Note> = storage.into();
-    //         }
-    //     }
-    // }
+        Ok(file_data)
+    }
 
-    // /// Save the notes to file
-    // pub fn save(&self, storage_path: Option<String>) {
-    //     match storage_path {
-    //         Some(path) => {
-    //             let mut storage =
-    //                 mmap_storage::file::Storage::open(path).expect("To create storage");
-
-    //             // TODO: Figure out how to save to file with this method
-    //             // storage.put_data(self.map)
-    //         }
-    //         None => {
-    //             let mut storage =
-    //                 mmap_storage::file::Storage::open(STORAGE_PATH).expect("To create storage");
-
-    //             // TODO: Figure out how to save to file with this method
-    //             // storage.put_data(self.map)
-    //         }
-    //     }
-    // }
+    /// Save the notes to file
+    pub fn save(&self, storage_path: Option<&'static str>) {
+        let path = storage_path.unwrap_or(STORAGE_PATH);
+        serde_json::to_writer(&File::create(path).unwrap(), &self).unwrap()
+    }
 
     /// Create an empty HashMap
     pub fn new() -> Self {
         // TODO: load from file here using above method when it works
-        let hash_map: HashMap<String, Note> = HashMap::new();
-        Self { map: hash_map }
+        Notes::load_storage(None).unwrap()
     }
 
     /// Append a note to the hashList of notes
