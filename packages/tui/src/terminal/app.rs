@@ -38,9 +38,13 @@ impl App {
         self.note_state.input = String::from("");
     }
 
-    pub fn new_note(&mut self) {
+    pub fn show_input(&mut self, mode: NoteInputState) {
         self.note_state.show_input_note = true;
-        self.note_state.input_state = NoteInputState::New;
+        match mode {
+            NoteInputState::Editting => self.set_edit_note(),
+            NoteInputState::New => self.set_new_note(),
+            _ => panic!("Unknown note state"),
+        };
     }
 
     pub fn add_note(&mut self) {
@@ -49,11 +53,16 @@ impl App {
         self.reset();
     }
 
-    pub fn edit_note(&mut self) {
+    fn set_new_note(&mut self) {
+        self.note_state.input_state = NoteInputState::New;
+        self.note_state.show_input_note = true;
+    }
+
+    fn set_edit_note(&mut self) {
+        self.note_state.input_state = NoteInputState::Editting;
         let idx = self.state.selected().unwrap_or_default();
         self.note_state.show_input_note = true;
         self.note_state.input = self.notes.get(idx).title.to_owned();
-        self.note_state.input_state = NoteInputState::Editting;
     }
 
     pub fn edit(&mut self) {
@@ -69,29 +78,29 @@ impl App {
     pub fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
-                if i >= self.notes.map.len() - 1 {
+                if i as isize >= (self.notes.map.len() as isize) - 1 {
                     0
                 } else {
-                    i + 1
+                    (i + 1) as isize
                 }
             }
             None => 0,
         };
-        self.state.select(Some(i));
+        self.state.select(Some(i as usize));
     }
 
     pub fn previous(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
                 if i == 0 {
-                    self.notes.map.len() - 1
+                    self.notes.map.len() as isize - 1
                 } else {
-                    i - 1
+                    (i - 1) as isize
                 }
             }
             None => 0,
         };
-        self.state.select(Some(i));
+        self.state.select(Some(i as usize));
     }
 
     pub fn delete(&mut self) {

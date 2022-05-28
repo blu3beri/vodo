@@ -74,9 +74,9 @@ impl VodoTerminal {
                             KeyCode::Char('j') => self.app.next(),
                             KeyCode::Char('k') => self.app.previous(),
                             KeyCode::Char('d') => self.app.delete(),
-                            KeyCode::Char('n') => self.app.new_note(),
+                            KeyCode::Char('n') => self.app.show_input(NoteInputState::New),
                             KeyCode::Char('s') => self.app.update_state(),
-                            KeyCode::Char('e') => self.app.edit_note(),
+                            KeyCode::Char('e') => self.app.show_input(NoteInputState::Editting),
                             _ => {}
                         }
                     } else {
@@ -143,8 +143,7 @@ impl VodoTerminal {
             let block = Block::default().title("New Note").borders(Borders::ALL);
             let p = Paragraph::new(app.note_state.input.as_ref())
                 .style(Style::default().fg(Color::White))
-                .block(block)
-                .wrap(Wrap { trim: true });
+                .block(block);
             f.set_cursor(
                 rects[1].x + app.note_state.input.len() as u16 + 1,
                 rects[1].y + 1,
