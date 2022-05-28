@@ -4,7 +4,7 @@
 
 #![deny(clippy::suspicious, clippy::complexity)]
 
-use backend::model::Notes;
+use backend::note::Notes;
 use std::io;
 use terminal::frontend::VodoTerminal;
 

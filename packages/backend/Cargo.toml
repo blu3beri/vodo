@@ -11,8 +11,8 @@ categories = ["tui"]
 
 [dependencies]
 serde_json = "1.0.81"
+chrono = "0.4"
 
 [dependencies.serde]
 version = "1.0.137"
 features = ["derive"]
-

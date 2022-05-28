@@ -1,3 +1,4 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::env;
@@ -39,6 +40,7 @@ impl From<State> for String {
     }
 }
 
+/// List of all your notes
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Notes {
     /// The actual notes
@@ -60,10 +62,12 @@ impl Default for Notes {
 }
 
 impl Notes {
+    /// Load new lotes
     pub fn new() -> Self {
         Notes::load_storage(&Notes::default()).unwrap()
     }
 
+    /// Load the notes from storage
     pub fn load_storage(&self) -> Result<Notes, Error> {
         let file = File::open(&self.path).unwrap();
         let reader = BufReader::new(file);
@@ -72,24 +76,29 @@ impl Notes {
         Ok(file_data)
     }
 
+    /// Save the notes to storage
     fn save(&self) {
         serde_json::to_writer(&File::create(&self.path).unwrap(), &self).unwrap()
     }
 
+    /// Add a new note to storage
     pub fn put(&mut self, note: Note) {
         self.map.push(note);
         self.save();
     }
 
+    /// Delete a note from storage
     pub fn delete(&mut self, idx: usize) {
         self.map.remove(idx);
         self.save();
     }
 
+    /// Get a note, by index, from storage
     pub fn get(&self, idx: usize) -> &Note {
         &self.map[idx]
     }
 
+    /// Update a note in storage
     pub fn update(&mut self, note: &mut Note, idx: usize) {
         std::mem::swap(&mut self.map[idx], note);
         self.save();
@@ -110,9 +119,8 @@ pub struct Note {
     // tags: Vec<String>,
     // /// Custom description in `md` format
     // description: Option<Path>,
-    // /// When the note was created
-    // /// TODO: date type?
-    // created_at: String,
+    /// When the note was created
+    pub created_at: String,
     // /// When the note was last updated
     // /// TODO: date type?
     // updated_at: String,
@@ -126,6 +134,7 @@ impl Note {
         Self {
             title: title.into(),
             state,
+            created_at: Utc::now().to_rfc3339(),
         }
     }
 }

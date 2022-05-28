@@ -1,5 +1,5 @@
 use super::app::App;
-use backend::model::{Notes, State};
+use backend::note::{Notes, State};
 use crossterm::{
     event::{read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
