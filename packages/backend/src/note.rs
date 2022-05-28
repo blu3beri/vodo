@@ -5,7 +5,7 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 
-use crate::error::Error;
+use crate::error::{Error, Result};
 
 /// State of a note
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -63,34 +63,39 @@ impl Default for Notes {
 
 impl Notes {
     /// Load new lotes
-    pub fn new() -> Self {
-        Notes::load_storage(&Notes::default()).unwrap()
+    pub fn new() -> Result<Self> {
+        Notes::load_storage(&Notes::default())
     }
 
     /// Load the notes from storage
-    pub fn load_storage(&self) -> Result<Notes, Error> {
-        let file = File::open(&self.path).unwrap();
+    pub fn load_storage(&self) -> Result<Notes> {
+        let file = File::open(&self.path).map_err(|_| Error::UnableToOpenFile)?;
         let reader = BufReader::new(file);
-        let file_data: Notes = serde_json::from_reader(reader).unwrap_or_default();
-
-        Ok(file_data)
+        let map: Vec<Note> = serde_json::from_reader(reader).unwrap_or_default();
+        Ok(Notes {
+            map,
+            path: self.path.to_owned(),
+        })
     }
 
     /// Save the notes to storage
-    fn save(&self) {
-        serde_json::to_writer(&File::create(&self.path).unwrap(), &self).unwrap()
+    fn save(&self) -> Result<()> {
+        let file = &File::create(&self.path)
+            .map_err(|_| Box::new(Error::UnableToCreateFile) as Box<dyn std::error::Error>)?;
+
+        serde_json::to_writer(file, &self.map).map_err(|_| Error::UnableToSaveFile.into())
     }
 
     /// Add a new note to storage
-    pub fn put(&mut self, note: Note) {
+    pub fn put(&mut self, note: Note) -> Result<()> {
         self.map.push(note);
-        self.save();
+        self.save()
     }
 
     /// Delete a note from storage
-    pub fn delete(&mut self, idx: usize) {
+    pub fn delete(&mut self, idx: usize) -> Result<()> {
         self.map.remove(idx);
-        self.save();
+        self.save()
     }
 
     /// Get a note, by index, from storage
@@ -99,9 +104,9 @@ impl Notes {
     }
 
     /// Update a note in storage
-    pub fn update(&mut self, note: &mut Note, idx: usize) {
+    pub fn update(&mut self, note: &mut Note, idx: usize) -> Result<()> {
         std::mem::swap(&mut self.map[idx], note);
-        self.save();
+        self.save()
     }
 }
 

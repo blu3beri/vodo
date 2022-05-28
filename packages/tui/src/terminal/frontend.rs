@@ -73,7 +73,7 @@ impl VodoTerminal {
                             KeyCode::Char('k') => self.app.previous(),
                             KeyCode::Char('d') => self.app.delete(),
                             KeyCode::Char('n') => self.app.new_note(),
-                            KeyCode::Char('s') => self.app.set_state(State::Done),
+                            KeyCode::Char('s') => self.app.update_state(),
                             _ => {}
                         }
                     } else {

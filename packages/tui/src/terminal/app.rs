@@ -36,7 +36,7 @@ impl App {
 
     pub fn add_note(&mut self) {
         let note = Note::new(self.new_note_state.input.to_owned(), State::Todo);
-        self.notes.put(note);
+        self.notes.put(note).unwrap();
         self.reset();
     }
 
@@ -71,7 +71,7 @@ impl App {
     pub fn delete(&mut self) {
         if let Some(i) = self.state.selected() {
             if self.notes.map.get(i).is_some() {
-                self.notes.delete(i);
+                self.notes.delete(i).unwrap();
                 if i == 0 {
                     self.state.select(Some(0));
                 } else {
@@ -81,15 +81,23 @@ impl App {
         }
     }
 
-    pub fn set_state(&mut self, state: State) {
+    pub fn update_state(&mut self) {
         if let Some(i) = self.state.selected() {
             if self.notes.map.get(i).is_some() {
+                // TODO: could increment be implemented for this?
+                let next_state = match self.notes.map[i].state {
+                    State::None => State::Todo,
+                    State::Todo => State::InProgress,
+                    State::InProgress => State::Done,
+                    State::Done => State::Expired,
+                    State::Expired => State::None,
+                };
                 let mut n = Note {
-                    state,
+                    state: next_state,
                     updated_at: Utc::now().to_rfc3339(),
                     ..self.notes.map[i].to_owned()
                 };
-                self.notes.update(&mut n, i);
+                self.notes.update(&mut n, i).unwrap();
             }
         }
     }

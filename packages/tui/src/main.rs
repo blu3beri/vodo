@@ -13,7 +13,10 @@ mod terminal;
 
 /// Entrypoint for the TUI of `vodo`
 fn main() -> Result<(), io::Error> {
-    let notes = Notes::new();
+    let notes = match Notes::new() {
+        Ok(notes) => notes,
+        Err(e) => panic!("{}", e),
+    };
 
     let mut terminal = VodoTerminal::setup(notes)?;
 
