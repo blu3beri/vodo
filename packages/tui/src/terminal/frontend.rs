@@ -1,7 +1,7 @@
 use crate::terminal::app::NoteInputState;
 
 use super::app::App;
-use backend::note::{Notes, State};
+use backend::note::Notes;
 use crossterm::{
     event::{read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -13,7 +13,7 @@ use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Cell, Paragraph, Row, Table, Wrap},
+    widgets::{Block, Borders, Cell, Paragraph, Row, Table},
     Frame, Terminal,
 };
 

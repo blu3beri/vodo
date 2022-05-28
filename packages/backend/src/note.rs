@@ -2,8 +2,10 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::env;
-use std::fs::File;
+use std::fs;
 use std::io::BufReader;
+use std::path::PathBuf;
+use std::str::FromStr;
 
 use crate::error::{Error, Result};
 
@@ -47,16 +49,16 @@ pub struct Notes {
     pub map: Vec<Note>,
 
     /// File path of the notes
-    path: String,
+    path: PathBuf,
 }
 
 impl Default for Notes {
     fn default() -> Self {
         let mut home = env::var("HOME").unwrap();
-        home.push_str("/.config/vodo/notes");
+        home.push_str("/.config/vodo/notes.json");
         Self {
             map: Default::default(),
-            path: home,
+            path: PathBuf::from_str(&home).unwrap(),
         }
     }
 }
@@ -69,7 +71,17 @@ impl Notes {
 
     /// Load the notes from storage
     pub fn load_storage(&self) -> Result<Notes> {
-        let file = File::open(&self.path).map_err(|_| Error::UnableToOpenFile)?;
+        if !self.path.exists() {
+            // Get the directories
+            let prefix = self.path.parent().unwrap();
+
+            // create all the required directories
+            fs::create_dir_all(prefix)?;
+
+            // Create the configuration file
+            fs::File::create(&self.path)?;
+        }
+        let file = fs::File::open(&self.path)?;
         let reader = BufReader::new(file);
         let map: Vec<Note> = serde_json::from_reader(reader).unwrap_or_default();
         Ok(Notes {
@@ -80,7 +92,7 @@ impl Notes {
 
     /// Save the notes to storage
     fn save(&self) -> Result<()> {
-        let file = &File::create(&self.path)
+        let file = &fs::File::create(&self.path)
             .map_err(|_| Box::new(Error::UnableToCreateFile) as Box<dyn std::error::Error>)?;
 
         serde_json::to_writer(file, &self.map).map_err(|_| Error::UnableToSaveFile.into())
