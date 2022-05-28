@@ -291,6 +291,7 @@ name = "tui"
 version = "0.0.0"
 dependencies = [
  "backend",
+ "chrono",
  "crossterm",
  "tui 0.18.0",
 ]

@@ -1,4 +1,5 @@
 use backend::note::{Note, Notes, State};
+use chrono::Utc;
 use tui::widgets::TableState;
 
 pub struct App {
@@ -85,6 +86,7 @@ impl App {
             if self.notes.map.get(i).is_some() {
                 let mut n = Note {
                     state,
+                    updated_at: Utc::now().to_rfc3339(),
                     ..self.notes.map[i].to_owned()
                 };
                 self.notes.update(&mut n, i);

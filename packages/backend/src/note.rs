@@ -121,9 +121,9 @@ pub struct Note {
     // description: Option<Path>,
     /// When the note was created
     pub created_at: String,
-    // /// When the note was last updated
-    // /// TODO: date type?
-    // updated_at: String,
+
+    /// When the note was last updated
+    pub updated_at: String,
     // /// What the priority level of the note is
     // priority: Option<u8>,
 }
@@ -135,6 +135,7 @@ impl Note {
             title: title.into(),
             state,
             created_at: Utc::now().to_rfc3339(),
+            updated_at: Utc::now().to_rfc3339(),
         }
     }
 }
