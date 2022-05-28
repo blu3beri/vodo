@@ -1,4 +1,4 @@
-use backend::model::{Note, Notes, State};
+use backend::note::{Note, Notes, State};
 use tui::widgets::TableState;
 
 pub struct App {
@@ -34,10 +34,7 @@ impl App {
     }
 
     pub fn add_note(&mut self) {
-        let note = Note {
-            state: State::Todo,
-            title: self.new_note_state.input.to_owned(),
-        };
+        let note = Note::new(self.new_note_state.input.to_owned(), State::Todo);
         self.notes.put(note);
         self.reset();
     }

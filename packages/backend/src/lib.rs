@@ -11,4 +11,4 @@
 mod error;
 
 /// Data structure model
-pub mod model;
+pub mod note;
