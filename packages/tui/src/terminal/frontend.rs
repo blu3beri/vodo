@@ -1,3 +1,5 @@
+use crate::terminal::app::NoteInputState;
+
 use super::app::App;
 use backend::note::{Notes, State};
 use crossterm::{
@@ -64,7 +66,7 @@ impl VodoTerminal {
                 .unwrap_or_else(|| Duration::from_secs(0));
             if crossterm::event::poll(timeout)? {
                 if let Event::Key(key) = read()? {
-                    if !self.app.new_note_state.show_new_note {
+                    if !self.app.note_state.show_input_note {
                         match key.code {
                             KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                             KeyCode::Down => self.app.next(),
@@ -74,16 +76,21 @@ impl VodoTerminal {
                             KeyCode::Char('d') => self.app.delete(),
                             KeyCode::Char('n') => self.app.new_note(),
                             KeyCode::Char('s') => self.app.update_state(),
+                            KeyCode::Char('e') => self.app.edit_note(),
                             _ => {}
                         }
                     } else {
                         match key.code {
-                            KeyCode::Char(c) => self.app.new_note_state.input.push(c),
+                            KeyCode::Char(c) => self.app.note_state.input.push(c),
                             KeyCode::Backspace => {
-                                self.app.new_note_state.input.pop();
+                                self.app.note_state.input.pop();
                             }
                             KeyCode::Esc => self.app.reset(),
-                            KeyCode::Enter => self.app.add_note(),
+                            KeyCode::Enter => match self.app.note_state.input_state {
+                                NoteInputState::New => self.app.add_note(),
+                                NoteInputState::Editting => self.app.edit(),
+                                _ => panic!("Unknown note state"),
+                            },
                             _ => {}
                         }
                     }
@@ -121,23 +128,25 @@ impl VodoTerminal {
         // -------------
 
         // --- commands ---
-        if !app.new_note_state.show_new_note {
+        if !app.note_state.show_input_note {
             let b = Block::default().borders(Borders::ALL).title("Commands");
-            let text =
-                Paragraph::new("(q) quit | (j) down | (k) up | (d) delete | (n) new note").block(b);
+            let text = Paragraph::new(
+                "(q) quit | (j) down | (k) up | (d) delete | (n) new note | (e) edit note",
+            )
+            .block(b);
             f.render_widget(text, rects[1]);
         }
         // ----------------
 
         // --- new note ---
-        if app.new_note_state.show_new_note {
+        if app.note_state.show_input_note {
             let block = Block::default().title("New Note").borders(Borders::ALL);
-            let p = Paragraph::new(app.new_note_state.input.as_ref())
+            let p = Paragraph::new(app.note_state.input.as_ref())
                 .style(Style::default().fg(Color::White))
                 .block(block)
                 .wrap(Wrap { trim: true });
             f.set_cursor(
-                rects[1].x + app.new_note_state.input.len() as u16 + 1,
+                rects[1].x + app.note_state.input.len() as u16 + 1,
                 rects[1].y + 1,
             );
             f.render_widget(p, rects[1]);

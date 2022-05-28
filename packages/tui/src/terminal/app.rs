@@ -5,11 +5,18 @@ use tui::widgets::TableState;
 pub struct App {
     pub state: TableState,
     pub notes: Notes,
-    pub new_note_state: NewNoteState,
+    pub note_state: NoteState,
 }
 
-pub struct NewNoteState {
-    pub show_new_note: bool,
+pub enum NoteInputState {
+    None,
+    New,
+    Editting,
+}
+
+pub struct NoteState {
+    pub input_state: NoteInputState,
+    pub show_input_note: bool,
     pub input: String,
 }
 
@@ -18,25 +25,44 @@ impl App {
         Self {
             state: TableState::default(),
             notes: items,
-            new_note_state: NewNoteState {
-                show_new_note: false,
+            note_state: NoteState {
+                input_state: NoteInputState::None,
+                show_input_note: false,
                 input: String::default(),
             },
         }
     }
 
     pub fn reset(&mut self) {
-        self.new_note_state.show_new_note = !self.new_note_state.show_new_note;
-        self.new_note_state.input = String::from("");
+        self.note_state.show_input_note = !self.note_state.show_input_note;
+        self.note_state.input = String::from("");
     }
 
     pub fn new_note(&mut self) {
-        self.new_note_state.show_new_note = true;
+        self.note_state.show_input_note = true;
+        self.note_state.input_state = NoteInputState::New;
     }
 
     pub fn add_note(&mut self) {
-        let note = Note::new(self.new_note_state.input.to_owned(), State::Todo);
+        let note = Note::new(self.note_state.input.to_owned(), State::Todo);
         self.notes.put(note).unwrap();
+        self.reset();
+    }
+
+    pub fn edit_note(&mut self) {
+        let idx = self.state.selected().unwrap_or_default();
+        self.note_state.show_input_note = true;
+        self.note_state.input = self.notes.get(idx).title.to_owned();
+        self.note_state.input_state = NoteInputState::Editting;
+    }
+
+    pub fn edit(&mut self) {
+        let idx = self.state.selected().unwrap_or_default();
+        let mut n = Note {
+            title: self.note_state.input.to_owned(),
+            ..self.notes.get(idx).to_owned()
+        };
+        self.notes.update(&mut n, idx).unwrap();
         self.reset();
     }
 
