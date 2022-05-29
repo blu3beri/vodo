@@ -18,6 +18,7 @@ pub struct NoteState {
     pub input_state: NoteInputState,
     pub show_input_note: bool,
     pub input: String,
+    pub should_delete: bool,
 }
 
 impl App {
@@ -29,6 +30,7 @@ impl App {
                 input_state: NoteInputState::None,
                 show_input_note: false,
                 input: String::default(),
+                should_delete: false,
             },
         }
     }
@@ -94,6 +96,7 @@ impl App {
             }
             None => 0,
         };
+        self.note_state.should_delete = false;
         self.state.select(Some(i as usize));
     }
 
@@ -108,19 +111,25 @@ impl App {
             }
             None => 0,
         };
+        self.note_state.should_delete = false;
         self.state.select(Some(i as usize));
     }
 
     pub fn delete(&mut self) {
-        if let Some(i) = self.state.selected() {
-            if self.notes.map.get(i).is_some() {
-                self.notes.delete(i).unwrap();
-                if i == 0 {
-                    self.state.select(Some(0));
-                } else {
-                    self.state.select(Some(i - 1));
+        if self.note_state.should_delete {
+            if let Some(i) = self.state.selected() {
+                if self.notes.map.get(i).is_some() {
+                    self.notes.delete(i).unwrap();
+                    if i == 0 {
+                        self.state.select(Some(0));
+                    } else {
+                        self.state.select(Some(i - 1));
+                    }
+                    self.note_state.should_delete = false;
                 }
             }
+        } else {
+            self.note_state.should_delete = true;
         }
     }
 
