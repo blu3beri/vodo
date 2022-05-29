@@ -72,7 +72,9 @@ impl VodoTerminal {
                             KeyCode::Down => self.app.next(),
                             KeyCode::Up => self.app.previous(),
                             KeyCode::Char('j') => self.app.next(),
+                            KeyCode::Char('J') => self.app.swap_down(),
                             KeyCode::Char('k') => self.app.previous(),
+                            KeyCode::Char('K') => self.app.swap_up(),
                             KeyCode::Char('d') => self.app.delete(),
                             KeyCode::Char('n') => self.app.show_input(NoteInputState::New),
                             KeyCode::Char('s') => self.app.update_state(),
@@ -166,7 +168,7 @@ impl VodoTerminal {
         if !app.note_state.show_input_note {
             let b = Block::default().borders(Borders::ALL).title("Commands");
             let text = Paragraph::new(
-                "(q) quit | (j) down | (k) up | (d) delete | (n) new note | (e) edit note | (p|P) prioritize",
+                "(q) quit | (j|J) down | (k|K) up | (d) delete | (n) new note | (e) edit note | (p|P) prioritize",
             )
             .block(b);
             f.render_widget(text, rects[1]);

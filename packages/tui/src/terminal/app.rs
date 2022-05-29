@@ -185,7 +185,6 @@ impl App {
         }
     }
 
-    // TODO: swap with the one above
     /// Change the priority of the note to be the first in the list
     pub fn prioritize(&mut self) {
         if let Some(i) = self.state.selected() {
@@ -195,12 +194,29 @@ impl App {
         }
     }
 
-    // TODO: swap with the one below
     /// Change the priority of the note to be the last in the list
     pub fn deprioritize(&mut self) {
         if let Some(i) = self.state.selected() {
             let note = self.notes.map.remove(i);
             self.notes.map.push(note);
+            self.notes.save().unwrap();
+        }
+    }
+
+    /// Change the priority of the note with the note above
+    pub fn swap_up(&mut self) {
+        if let Some(i) = self.state.selected() {
+            self.notes.map.swap(i, i - 1);
+            self.state.select(Some(i - 1));
+            self.notes.save().unwrap();
+        }
+    }
+
+    /// Change the priority of the note with the note above
+    pub fn swap_down(&mut self) {
+        if let Some(i) = self.state.selected() {
+            self.notes.map.swap(i, i + 1);
+            self.state.select(Some(i + 1));
             self.notes.save().unwrap();
         }
     }
