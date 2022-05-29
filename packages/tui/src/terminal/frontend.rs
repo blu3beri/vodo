@@ -104,7 +104,12 @@ impl VodoTerminal {
             .constraints([Constraint::Min(10), Constraint::Length(3)].as_ref())
             .split(f.size());
 
-        let selected_style = Style::default().add_modifier(Modifier::REVERSED);
+        let selected_style = match app.note_state.should_delete {
+            true => Style::default()
+                .add_modifier(Modifier::REVERSED)
+                .fg(Color::Red),
+            false => Style::default().add_modifier(Modifier::REVERSED),
+        };
 
         // --- table ---
         let header_cells = ["State", "Note"]
