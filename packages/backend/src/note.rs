@@ -91,7 +91,7 @@ impl Notes {
     }
 
     /// Save the notes to storage
-    fn save(&self) -> Result<()> {
+    pub fn save(&self) -> Result<()> {
         let file = &fs::File::create(&self.path)
             .map_err(|_| Box::new(Error::UnableToCreateFile) as Box<dyn std::error::Error>)?;
 

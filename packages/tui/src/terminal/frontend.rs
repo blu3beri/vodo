@@ -89,6 +89,7 @@ impl VodoTerminal {
                                         self.app.note_state.input.pop();
                                     }
                                     KeyCode::Enter => self.app.add_note(),
+                                    KeyCode::Esc => self.app.reset(),
                                     _ => {}
                                 };
                             }
@@ -99,6 +100,7 @@ impl VodoTerminal {
                                         self.app.note_state.input.pop();
                                     }
                                     KeyCode::Enter => self.app.edit_note(),
+                                    KeyCode::Esc => self.app.reset(),
                                     _ => {}
                                 };
                             }
@@ -109,6 +111,7 @@ impl VodoTerminal {
                                         self.app.note_state.category.pop();
                                     }
                                     KeyCode::Enter => self.app.set_category(),
+                                    KeyCode::Esc => self.app.reset(),
                                     _ => {}
                                 };
                             }

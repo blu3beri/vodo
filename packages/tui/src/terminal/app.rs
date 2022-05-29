@@ -190,6 +190,7 @@ impl App {
         if let Some(i) = self.state.selected() {
             let note = self.notes.map.swap_remove(i);
             self.notes.map.insert(0, note);
+            self.notes.save().unwrap();
         }
     }
 }
