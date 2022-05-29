@@ -140,7 +140,12 @@ impl VodoTerminal {
 
         // --- new note ---
         if app.note_state.show_input_note {
-            let block = Block::default().title("New Note").borders(Borders::ALL);
+            let title = match app.note_state.input_state {
+                NoteInputState::Editting => "Edit Note",
+                NoteInputState::New => "New Note",
+                _ => panic!("Unknown state"),
+            };
+            let block = Block::default().title(title).borders(Borders::ALL);
             let p = Paragraph::new(app.note_state.input.as_ref())
                 .style(Style::default().fg(Color::White))
                 .block(block);

@@ -111,8 +111,8 @@ impl Notes {
     }
 
     /// Get a note, by index, from storage
-    pub fn get(&self, idx: usize) -> &Note {
-        &self.map[idx]
+    pub fn get(&self, idx: usize) -> Option<&Note> {
+        self.map.get(idx)
     }
 
     /// Update a note in storage

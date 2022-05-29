@@ -59,19 +59,27 @@ impl App {
     }
 
     fn set_edit_note(&mut self) {
-        self.note_state.input_state = NoteInputState::Editting;
         let idx = self.state.selected().unwrap_or_default();
-        self.note_state.show_input_note = true;
-        self.note_state.input = self.notes.get(idx).title.to_owned();
+        let note = self.notes.get(idx);
+        if let Some(note) = note {
+            self.note_state.input_state = NoteInputState::Editting;
+            self.note_state.show_input_note = true;
+            self.note_state.input = note.title.to_owned();
+        } else {
+            self.note_state.show_input_note = false;
+        }
     }
 
     pub fn edit(&mut self) {
         let idx = self.state.selected().unwrap_or_default();
-        let mut n = Note {
-            title: self.note_state.input.to_owned(),
-            ..self.notes.get(idx).to_owned()
-        };
-        self.notes.update(&mut n, idx).unwrap();
+        let note = self.notes.get(idx);
+        if let Some(note) = note {
+            let mut n = Note {
+                title: self.note_state.input.to_owned(),
+                ..note.to_owned()
+            };
+            self.notes.update(&mut n, idx).unwrap();
+        }
         self.reset();
     }
 
