@@ -12,12 +12,14 @@ pub enum NoteInputState {
     None,
     New,
     Editting,
+    Category,
 }
 
 pub struct NoteState {
     pub input_state: NoteInputState,
     pub show_input_note: bool,
     pub input: String,
+    pub category: String,
     pub should_delete: bool,
 }
 
@@ -30,6 +32,7 @@ impl App {
                 input_state: NoteInputState::None,
                 show_input_note: false,
                 input: String::default(),
+                category: String::default(),
                 should_delete: false,
             },
         }
@@ -50,13 +53,22 @@ impl App {
     }
 
     pub fn add_note(&mut self) {
-        let note = Note::new(self.note_state.input.to_owned(), State::Todo);
+        let note = Note::new(
+            self.note_state.input.to_owned(),
+            self.note_state.category.to_owned(),
+            State::Todo,
+        );
         self.notes.put(note).unwrap();
         self.reset();
     }
 
     fn set_new_note(&mut self) {
         self.note_state.input_state = NoteInputState::New;
+        self.note_state.show_input_note = true;
+    }
+
+    pub fn set_category(&mut self) {
+        self.note_state.input_state = NoteInputState::Category;
         self.note_state.show_input_note = true;
     }
 

@@ -1,7 +1,7 @@
 use crate::terminal::app::NoteInputState;
 
-use super::app::App;
-use backend::note::Notes;
+use super::app::{App, NoteState};
+use backend::note::{Note, Notes};
 use crossterm::{
     event::{read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -82,14 +82,21 @@ impl VodoTerminal {
                         }
                     } else {
                         match key.code {
-                            KeyCode::Char(c) => self.app.note_state.input.push(c),
+                            KeyCode::Char(c) => match self.app.note_state.input_state {
+                                NoteInputState::New | NoteInputState::Editting => {
+                                    self.app.note_state.input.push(c)
+                                }
+                                NoteInputState::Category => self.app.note_state.category.push(c),
+                                _ => panic!("Unknown state"),
+                            },
                             KeyCode::Backspace => {
                                 self.app.note_state.input.pop();
                             }
                             KeyCode::Esc => self.app.reset(),
                             KeyCode::Enter => match self.app.note_state.input_state {
-                                NoteInputState::New => self.app.add_note(),
+                                NoteInputState::New => self.app.set_category(),
                                 NoteInputState::Editting => self.app.edit(),
+                                NoteInputState::Category => self.app.add_note(),
                                 _ => panic!("Unknown note state"),
                             },
                             _ => {}
@@ -113,13 +120,14 @@ impl VodoTerminal {
         };
 
         // --- table ---
-        let header_cells = ["State", "Note"]
+        let header_cells = ["State", "Category", "Note"]
             .iter()
             .map(|h| Cell::from(*h).style(Style::default().add_modifier(Modifier::BOLD)));
         let header = Row::new(header_cells).height(1);
         let rows = app.notes.map.iter().map(|item| {
             let cells = vec![
                 Cell::from(String::from(item.state.to_owned())),
+                Cell::from(item.category.to_owned()),
                 Cell::from(item.title.to_owned()),
             ];
             Row::new(cells)
@@ -129,7 +137,11 @@ impl VodoTerminal {
             .block(Block::default().borders(Borders::ALL).title("Notes"))
             .header(header)
             .highlight_style(selected_style)
-            .widths(&[Constraint::Percentage(15), Constraint::Percentage(100)]);
+            .widths(&[
+                Constraint::Percentage(10),
+                Constraint::Percentage(10),
+                Constraint::Percentage(100),
+            ]);
         f.render_stateful_widget(table, rects[0], &mut app.state);
         // -------------
 
@@ -145,20 +157,38 @@ impl VodoTerminal {
         // ----------------
 
         // --- new note ---
+        // TODO: one giant match
         if app.note_state.show_input_note {
             let title = match app.note_state.input_state {
                 NoteInputState::Editting => "Edit Note",
                 NoteInputState::New => "New Note",
+                NoteInputState::Category => "Category",
                 _ => panic!("Unknown state"),
             };
             let block = Block::default().title(title).borders(Borders::ALL);
-            let p = Paragraph::new(app.note_state.input.as_ref())
+            let x = match app.note_state.input_state {
+                NoteInputState::New | NoteInputState::Editting => app.note_state.input.as_ref(),
+                NoteInputState::Category => app.note_state.category.as_ref(),
+                _ => panic!("Uknown state"),
+            };
+            let p = Paragraph::new(x)
                 .style(Style::default().fg(Color::White))
                 .block(block);
-            f.set_cursor(
-                rects[1].x + app.note_state.input.len() as u16 + 1,
-                rects[1].y + 1,
-            );
+            match app.note_state.input_state {
+                NoteInputState::Editting | NoteInputState::New => {
+                    f.set_cursor(
+                        rects[1].x + app.note_state.input.len() as u16 + 1,
+                        rects[1].y + 1,
+                    );
+                }
+                NoteInputState::Category => {
+                    f.set_cursor(
+                        rects[1].x + app.note_state.category.len() as u16 + 1,
+                        rects[1].y + 1,
+                    );
+                }
+                _ => panic!("unknown state"),
+            };
             f.render_widget(p, rects[1]);
         }
         // ----------------

@@ -130,6 +130,10 @@ pub struct Note {
 
     /// Simple state of the note
     pub state: State,
+
+    /// The category of the note
+    pub category: String,
+
     // /// When the expiry date hits
     // ends_at: Option<String>,
     // /// Tags to categorize and filter on by the user
@@ -141,16 +145,15 @@ pub struct Note {
 
     /// When the note was last updated
     pub updated_at: String,
-    // /// What the priority level of the note is
-    // priority: Option<u8>,
 }
 
 impl Note {
     /// Create a new note with a title
-    pub fn new(title: impl Into<String>, state: State) -> Self {
+    pub fn new(title: impl Into<String>, category: String, state: State) -> Self {
         Self {
             title: title.into(),
             state,
+            category,
             created_at: Utc::now().to_rfc3339(),
             updated_at: Utc::now().to_rfc3339(),
         }
