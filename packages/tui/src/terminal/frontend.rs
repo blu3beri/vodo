@@ -1,7 +1,7 @@
 use crate::terminal::app::NoteInputState;
 
-use super::app::{App, NoteState};
-use backend::note::{Note, Notes};
+use super::app::App;
+use backend::note::Notes;
 use crossterm::{
     event::{read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -94,9 +94,9 @@ impl VodoTerminal {
                             }
                             KeyCode::Esc => self.app.reset(),
                             KeyCode::Enter => match self.app.note_state.input_state {
-                                NoteInputState::New => self.app.set_category(),
-                                NoteInputState::Editting => self.app.edit(),
-                                NoteInputState::Category => self.app.add_note(),
+                                NoteInputState::New => self.app.add_note(),
+                                NoteInputState::Editting => self.app.edit_note(),
+                                NoteInputState::Category => self.app.set_category(),
                                 _ => panic!("Unknown note state"),
                             },
                             _ => {}
@@ -159,36 +159,29 @@ impl VodoTerminal {
         // --- new note ---
         // TODO: one giant match
         if app.note_state.show_input_note {
-            let title = match app.note_state.input_state {
-                NoteInputState::Editting => "Edit Note",
-                NoteInputState::New => "New Note",
-                NoteInputState::Category => "Category",
+            let (title, text, len) = match app.note_state.input_state {
+                NoteInputState::Editting => (
+                    "Edit Note",
+                    app.note_state.input.as_ref(),
+                    app.note_state.input.len(),
+                ),
+                NoteInputState::New => (
+                    "New Note",
+                    app.note_state.input.as_ref(),
+                    app.note_state.input.len(),
+                ),
+                NoteInputState::Category => (
+                    "Category",
+                    app.note_state.category.as_ref(),
+                    app.note_state.category.len(),
+                ),
                 _ => panic!("Unknown state"),
             };
             let block = Block::default().title(title).borders(Borders::ALL);
-            let x = match app.note_state.input_state {
-                NoteInputState::New | NoteInputState::Editting => app.note_state.input.as_ref(),
-                NoteInputState::Category => app.note_state.category.as_ref(),
-                _ => panic!("Uknown state"),
-            };
-            let p = Paragraph::new(x)
+            let p = Paragraph::new(text)
                 .style(Style::default().fg(Color::White))
                 .block(block);
-            match app.note_state.input_state {
-                NoteInputState::Editting | NoteInputState::New => {
-                    f.set_cursor(
-                        rects[1].x + app.note_state.input.len() as u16 + 1,
-                        rects[1].y + 1,
-                    );
-                }
-                NoteInputState::Category => {
-                    f.set_cursor(
-                        rects[1].x + app.note_state.category.len() as u16 + 1,
-                        rects[1].y + 1,
-                    );
-                }
-                _ => panic!("unknown state"),
-            };
+            f.set_cursor(rects[1].x + len as u16 + 1, rects[1].y + 1);
             f.render_widget(p, rects[1]);
         }
         // ----------------

@@ -1,7 +1,7 @@
 //! main backend for all the functionality of `vodo`
 
 #![deny(
-    // clippy::missing_docs_in_private_items,
+    clippy::missing_docs_in_private_items,
     clippy::suspicious,
     clippy::complexity,
     clippy::cargo

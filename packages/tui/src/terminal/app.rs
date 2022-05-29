@@ -38,21 +38,25 @@ impl App {
         }
     }
 
-    pub fn reset(&mut self) {
-        self.note_state.show_input_note = !self.note_state.show_input_note;
-        self.note_state.input = String::from("");
-    }
-
-    pub fn show_input(&mut self, mode: NoteInputState) {
+    /// Prepare UI to add a note
+    pub fn prepare_add_note(&mut self) {
+        self.note_state.input_state = NoteInputState::New;
         self.note_state.show_input_note = true;
-        match mode {
-            NoteInputState::Editting => self.set_edit_note(),
-            NoteInputState::New => self.set_new_note(),
-            _ => panic!("Unknown note state"),
-        };
     }
 
+    /// Continue to the next step
     pub fn add_note(&mut self) {
+        self.prepare_set_category();
+    }
+
+    /// Prepare to set the category
+    pub fn prepare_set_category(&mut self) {
+        self.note_state.input_state = NoteInputState::Category;
+        self.note_state.show_input_note = true;
+    }
+
+    /// add note
+    pub fn set_category(&mut self) {
         let note = Note::new(
             self.note_state.input.to_owned(),
             self.note_state.category.to_owned(),
@@ -62,17 +66,8 @@ impl App {
         self.reset();
     }
 
-    fn set_new_note(&mut self) {
-        self.note_state.input_state = NoteInputState::New;
-        self.note_state.show_input_note = true;
-    }
-
-    pub fn set_category(&mut self) {
-        self.note_state.input_state = NoteInputState::Category;
-        self.note_state.show_input_note = true;
-    }
-
-    fn set_edit_note(&mut self) {
+    /// Prepare UI to edit the note
+    pub fn prepare_edit_note(&mut self) {
         let idx = self.state.selected().unwrap_or_default();
         let note = self.notes.get(idx);
         if let Some(note) = note {
@@ -84,7 +79,8 @@ impl App {
         }
     }
 
-    pub fn edit(&mut self) {
+    /// Edit and update the note
+    pub fn edit_note(&mut self) {
         let idx = self.state.selected().unwrap_or_default();
         let note = self.notes.get(idx);
         if let Some(note) = note {
@@ -97,6 +93,25 @@ impl App {
         self.reset();
     }
 
+    /// reset the state of the application
+    pub fn reset(&mut self) {
+        self.note_state.show_input_note = false;
+        self.note_state.category = String::from("");
+        self.note_state.input = String::from("");
+        self.note_state.input_state = NoteInputState::None;
+    }
+
+    /// Show input according to the input mode
+    pub fn show_input(&mut self, mode: NoteInputState) {
+        self.note_state.show_input_note = true;
+        match mode {
+            NoteInputState::Editting => self.prepare_edit_note(),
+            NoteInputState::New => self.prepare_add_note(),
+            _ => panic!("Unknown note state"),
+        };
+    }
+
+    /// Select the next note
     pub fn next(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
@@ -112,6 +127,7 @@ impl App {
         self.state.select(Some(i as usize));
     }
 
+    /// Select the previous note
     pub fn previous(&mut self) {
         let i = match self.state.selected() {
             Some(i) => {
@@ -127,6 +143,8 @@ impl App {
         self.state.select(Some(i as usize));
     }
 
+    /// Delete the selected note
+    /// delete has to be called twice
     pub fn delete(&mut self) {
         if self.note_state.should_delete {
             if let Some(i) = self.state.selected() {
@@ -145,6 +163,7 @@ impl App {
         }
     }
 
+    /// Update the state of a todo with a loop
     pub fn update_state(&mut self) {
         if let Some(i) = self.state.selected() {
             if self.notes.map.get(i).is_some() {
@@ -166,6 +185,7 @@ impl App {
         }
     }
 
+    /// Change the priority of the note to be the first in the list
     pub fn prioritize(&mut self) {
         if let Some(i) = self.state.selected() {
             let note = self.notes.map.swap_remove(i);

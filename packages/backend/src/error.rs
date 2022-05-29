@@ -3,7 +3,9 @@ use std::fmt::{Display, Formatter};
 /// User-level errors that can be thrown at runtime
 #[derive(Debug)]
 pub enum Error {
+    /// Unable to create a file
     UnableToCreateFile,
+    /// Unable to write the output of the note to the file
     UnableToSaveFile,
 }
 
