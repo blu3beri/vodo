@@ -81,26 +81,39 @@ impl VodoTerminal {
                             _ => {}
                         }
                     } else {
-                        match key.code {
-                            KeyCode::Char(c) => match self.app.note_state.input_state {
-                                NoteInputState::New | NoteInputState::Editting => {
-                                    self.app.note_state.input.push(c)
-                                }
-                                NoteInputState::Category => self.app.note_state.category.push(c),
-                                _ => panic!("Unknown state"),
-                            },
-                            KeyCode::Backspace => {
-                                self.app.note_state.input.pop();
+                        match self.app.note_state.input_state {
+                            NoteInputState::New => {
+                                match key.code {
+                                    KeyCode::Char(c) => self.app.note_state.input.push(c),
+                                    KeyCode::Backspace => {
+                                        self.app.note_state.input.pop();
+                                    }
+                                    KeyCode::Enter => self.app.add_note(),
+                                    _ => {}
+                                };
                             }
-                            KeyCode::Esc => self.app.reset(),
-                            KeyCode::Enter => match self.app.note_state.input_state {
-                                NoteInputState::New => self.app.add_note(),
-                                NoteInputState::Editting => self.app.edit_note(),
-                                NoteInputState::Category => self.app.set_category(),
-                                _ => panic!("Unknown note state"),
-                            },
-                            _ => {}
-                        }
+                            NoteInputState::Editting => {
+                                match key.code {
+                                    KeyCode::Char(c) => self.app.note_state.input.push(c),
+                                    KeyCode::Backspace => {
+                                        self.app.note_state.input.pop();
+                                    }
+                                    KeyCode::Enter => self.app.edit_note(),
+                                    _ => {}
+                                };
+                            }
+                            NoteInputState::Category => {
+                                match key.code {
+                                    KeyCode::Char(c) => self.app.note_state.category.push(c),
+                                    KeyCode::Backspace => {
+                                        self.app.note_state.category.pop();
+                                    }
+                                    KeyCode::Enter => self.app.set_category(),
+                                    _ => {}
+                                };
+                            }
+                            _ => panic!("Unknown state"),
+                        };
                     }
                 }
             }
